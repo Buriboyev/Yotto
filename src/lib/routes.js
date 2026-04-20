@@ -1,5 +1,6 @@
 const routeConfig = {
   "/": { page: "home", scrollTarget: "" },
+  "/admin": { page: "admin", scrollTarget: "" },
   "/branches": { page: "home", scrollTarget: "branches" },
   "/gallery": { page: "home", scrollTarget: "gallery" },
   "/menu": { page: "menu", scrollTarget: "" },

@@ -152,3 +152,17 @@ export const updateOrderStatus = async (id, status) => {
   writeLocalOrders(next);
   window.dispatchEvent(new CustomEvent("yotto-local-orders-updated"));
 };
+
+export const deleteOrder = async (id) => {
+  if (isFirebaseConfigured) {
+    const [db, firestore] = await Promise.all([getDb(), import("firebase/firestore")]);
+    await firestore.deleteDoc(firestore.doc(db, "orders", id));
+    return;
+  }
+
+  const orders = readLocalOrders();
+  const next = orders.filter((order) => order.id !== id);
+
+  writeLocalOrders(next);
+  window.dispatchEvent(new CustomEvent("yotto-local-orders-updated"));
+};

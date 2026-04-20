@@ -20,6 +20,7 @@ import {
 } from "./lib/menu";
 import { buildSearchIndex, getSearchForms } from "./lib/search";
 import {
+  deleteOrder,
   submitOrder,
   subscribeToOrders,
   updateOrderStatus,
@@ -28,6 +29,7 @@ import { isFirebaseConfigured } from "./lib/firebase";
 import { buildAppUrl, getRouteData } from "./lib/routes";
 import AppHeader from "./components/AppHeader";
 import AdminPanel from "./components/AdminPanel";
+import AdminAccessCard from "./components/AdminAccessCard";
 import AuthModal from "./components/AuthModal";
 import ImageViewerModal from "./components/ImageViewerModal";
 import FooterBar from "./components/FooterBar";
@@ -37,6 +39,7 @@ import MenuPage from "./pages/MenuPage";
 const ADMIN_AUTH_KEY = "yotto-admin-auth-v2";
 const LANGUAGE_KEY = "yotto-language-v1";
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "yotto-admin-2026";
+const ADMIN_WINDOW_NAME = "yotto-admin-desk";
 const footerContacts = [
   {
     icon: "telegram",
@@ -72,6 +75,14 @@ const getDefaultDate = () => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   return tomorrow.toISOString().slice(0, 10);
+};
+
+const hasAdminAccess = () => {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.localStorage.getItem(ADMIN_AUTH_KEY) === "granted";
 };
 
 const getDisplayBranches = () =>
@@ -193,7 +204,7 @@ export default function App() {
   const [boardPreview, setBoardPreview] = useState(null);
   const [secretTaps, setSecretTaps] = useState(0);
   const [authOpen, setAuthOpen] = useState(false);
-  const [adminOpen, setAdminOpen] = useState(false);
+  const [isAdminAuthorized, setIsAdminAuthorized] = useState(hasAdminAccess);
   const [adminPassword, setAdminPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [adminSearch, setAdminSearch] = useState("");
@@ -201,14 +212,44 @@ export default function App() {
   const [adminServiceFilter, setAdminServiceFilter] = useState("all");
   const [adminBranchFilter, setAdminBranchFilter] = useState("all");
   const [selectedOrderId, setSelectedOrderId] = useState("");
+  const [isDeletingOrder, setIsDeletingOrder] = useState("");
 
   const deferredMenuSearch = useDeferredValue(menuSearch);
   const deferredAdminSearch = useDeferredValue(adminSearch);
   const tapTimerRef = useRef(null);
   const currentRoute = getRouteData(currentPath);
+  const isAdminRoute = currentRoute.page === "admin";
   const isMenuRoute = currentRoute.page === "menu";
 
-  const text = useMemo(() => mergeContent(copy[language], textOverrides[language]), [language]);
+  const text = useMemo(() => {
+    const adminEnhancements =
+      language === "uz"
+        ? {
+            admin: {
+              markDone: "Bajarildi deb belgilash",
+              delete: "Buyurtmani o'chirish",
+              deleteConfirmTitle: "Bu buyurtma o'chirilsinmi?",
+              deleteConfirmText: "Buyurtma ro'yxatdan butunlay o'chadi va qayta tiklanmaydi.",
+              deleteConfirmButton: "O'chirish",
+              cancelAction: "Bekor qilish",
+              backToSite: "Saytga qaytish",
+            },
+          }
+        : {
+            admin: {
+              markDone: "\u041e\u0442\u043c\u0435\u0442\u0438\u0442\u044c \u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d\u043d\u044b\u043c",
+              delete: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0437\u0430\u043a\u0430\u0437",
+              deleteConfirmTitle: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u044d\u0442\u043e\u0442 \u0437\u0430\u043a\u0430\u0437?",
+              deleteConfirmText:
+                "\u0417\u0430\u043f\u0438\u0441\u044c \u0431\u0443\u0434\u0435\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u0430 \u0431\u0435\u0437 \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0438 \u0432\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c.",
+              deleteConfirmButton: "\u0423\u0434\u0430\u043b\u0438\u0442\u044c",
+              cancelAction: "\u041e\u0442\u043c\u0435\u043d\u0430",
+              backToSite: "\u0412\u0435\u0440\u043d\u0443\u0442\u044c\u0441\u044f \u043d\u0430 \u0441\u0430\u0439\u0442",
+            },
+          };
+
+    return mergeContent(mergeContent(copy[language], textOverrides[language]), adminEnhancements);
+  }, [language]);
   const displayBranches = useMemo(() => branches.map((branch) => {
     if (branch.id === "jorabayeva") {
       return {
@@ -271,6 +312,17 @@ export default function App() {
   }, [language]);
 
   useEffect(() => {
+    const syncAdminAccess = (event) => {
+      if (!event || event.key === ADMIN_AUTH_KEY) {
+        setIsAdminAuthorized(hasAdminAccess());
+      }
+    };
+
+    window.addEventListener("storage", syncAdminAccess);
+    return () => window.removeEventListener("storage", syncAdminAccess);
+  }, []);
+
+  useEffect(() => {
     const canonicalUrl = buildAppUrl(window.location.pathname);
     if (window.location.pathname !== canonicalUrl) {
       window.history.replaceState({}, "", canonicalUrl);
@@ -294,29 +346,38 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const revealItems = document.querySelectorAll("[data-reveal]");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-          }
-        });
-      },
-      { threshold: 0.18 },
-    );
+    let observer = null;
+    const frameId = window.requestAnimationFrame(() => {
+      const revealItems = document.querySelectorAll("[data-reveal]");
 
-    revealItems.forEach((item) => observer.observe(item));
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
+            }
+          });
+        },
+        {
+          threshold: 0.04,
+          rootMargin: "0px 0px -6% 0px",
+        },
+      );
 
-    return () => observer.disconnect();
-  }, [currentPath]);
+      revealItems.forEach((item) => observer.observe(item));
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      observer?.disconnect();
+    };
+  }, [currentPath, menuCategory, menuBranch, deferredMenuSearch, boardBranch]);
 
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") {
         setBoardPreview(null);
         setAuthOpen(false);
-        setAdminOpen(false);
       }
     };
 
@@ -466,10 +527,33 @@ export default function App() {
     changeCartQuantity(product, selectedOption, -1);
   }, [changeCartQuantity]);
 
+  const openAdminWindow = useCallback(() => {
+    const adminUrl = buildAppUrl("/admin");
+    const adminWindow = window.open(
+      adminUrl,
+      ADMIN_WINDOW_NAME,
+      "popup=yes,width=1480,height=940,left=120,top=60,resizable=yes,scrollbars=yes",
+    );
+
+    if (adminWindow) {
+      adminWindow.focus();
+      return;
+    }
+
+    if (window.location.pathname !== adminUrl) {
+      window.history.pushState({}, "", adminUrl);
+    }
+
+    setCurrentPath("/admin");
+    setPendingScrollTarget("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   const openAdminAccess = () => {
-    if (window.localStorage.getItem(ADMIN_AUTH_KEY) === "granted") {
-      setAdminOpen(true);
+    if (hasAdminAccess()) {
+      setIsAdminAuthorized(true);
       setAuthOpen(false);
+      openAdminWindow();
       return;
     }
 
@@ -496,9 +580,15 @@ export default function App() {
 
     if (adminPassword === ADMIN_PASSWORD) {
       window.localStorage.setItem(ADMIN_AUTH_KEY, "granted");
+      setIsAdminAuthorized(true);
       setAuthOpen(false);
-      setAdminOpen(true);
       setAuthError("");
+      setAdminPassword("");
+
+      if (!isAdminRoute) {
+        openAdminWindow();
+      }
+
       return;
     }
 
@@ -507,8 +597,10 @@ export default function App() {
 
   const logoutAdmin = () => {
     window.localStorage.removeItem(ADMIN_AUTH_KEY);
-    setAdminOpen(false);
+    setIsAdminAuthorized(false);
     setAuthOpen(false);
+    setAdminPassword("");
+    setAuthError("");
   };
 
   const resetFlow = () => {
@@ -609,6 +701,63 @@ export default function App() {
     }
   };
 
+  const handleMarkDone = async (id) => {
+    if (!id) {
+      return;
+    }
+
+    await handleStatusChange(id, "done");
+  };
+
+  const handleDeleteOrder = async (id) => {
+    if (!id) {
+      return;
+    }
+
+    const result = await fireAlert({
+      icon: "warning",
+      title: text.admin.deleteConfirmTitle,
+      text: text.admin.deleteConfirmText,
+      showCancelButton: true,
+      confirmButtonText: text.admin.deleteConfirmButton,
+      cancelButtonText: text.admin.cancelAction,
+      confirmButtonColor: "#ff6b57",
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      setIsDeletingOrder(id);
+      await deleteOrder(id);
+    } catch (error) {
+      await fireAlert({
+        icon: "error",
+        title: error instanceof Error ? error.message : "Error",
+      });
+    } finally {
+      setIsDeletingOrder("");
+    }
+  };
+
+  const closeAdminWindow = useCallback(() => {
+    if (window.opener && !window.opener.closed) {
+      window.close();
+      return;
+    }
+
+    const homeUrl = buildAppUrl("/");
+
+    if (window.location.pathname !== homeUrl) {
+      window.history.pushState({}, "", homeUrl);
+    }
+
+    setCurrentPath("/");
+    setPendingScrollTarget("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   const navigateTo = useCallback((path, scrollTarget = "") => {
     const nextRoute = getRouteData(path);
     const nextPath = nextRoute.path;
@@ -644,6 +793,64 @@ export default function App() {
   const navigateGallery = useCallback(() => navigateTo("/gallery"), [navigateTo]);
   const navigateMenuPage = useCallback(() => navigateTo("/menu"), [navigateTo]);
   const navigateReservationPage = useCallback(() => navigateTo("/reservation"), [navigateTo]);
+
+  if (isAdminRoute) {
+    return (
+      <div className="page-shell admin-route-shell">
+        <div className="ambient ambient-one" />
+        <div className="ambient ambient-two" />
+        <div className="ambient ambient-three" />
+
+        {isAdminAuthorized ? (
+          <AdminPanel
+            closeAdmin={closeAdminWindow}
+            language={language}
+            text={text}
+            branches={displayBranches}
+            orders={filteredOrders}
+            selectedOrder={selectedOrder}
+            selectedOrderId={selectedOrderId}
+            setSelectedOrderId={setSelectedOrderId}
+            adminSearch={adminSearch}
+            setAdminSearch={setAdminSearch}
+            adminStatusFilter={adminStatusFilter}
+            setAdminStatusFilter={setAdminStatusFilter}
+            adminServiceFilter={adminServiceFilter}
+            setAdminServiceFilter={setAdminServiceFilter}
+            adminBranchFilter={adminBranchFilter}
+            setAdminBranchFilter={setAdminBranchFilter}
+            branchMap={branchMap}
+            statusOptions={statusOptions}
+            serviceModes={serviceModes}
+            isFirebaseConfigured={isFirebaseConfigured}
+            isUpdatingStatus={isUpdatingStatus}
+            isDeletingOrder={isDeletingOrder}
+            handleStatusChange={handleStatusChange}
+            handleMarkDone={handleMarkDone}
+            handleDeleteOrder={handleDeleteOrder}
+            logoutAdmin={logoutAdmin}
+            formatDateTime={formatDateTime}
+            standalone
+          />
+        ) : (
+          <div className="admin-access-shell">
+            <AdminAccessCard
+              text={text}
+              adminPassword={adminPassword}
+              setAdminPassword={setAdminPassword}
+              authError={authError}
+              handleAdminAuth={handleAdminAuth}
+            />
+            <div className="admin-access-actions">
+              <button className="ghost-btn" type="button" onClick={navigateHome}>
+                {text.admin.backToSite}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -719,34 +926,6 @@ export default function App() {
           onSecretTap={handleFooterTap}
         />
       </div>
-
-      <AdminPanel
-        adminOpen={adminOpen}
-        closeAdmin={() => setAdminOpen(false)}
-        language={language}
-        text={text}
-        branches={displayBranches}
-        orders={filteredOrders}
-        selectedOrder={selectedOrder}
-        selectedOrderId={selectedOrderId}
-        setSelectedOrderId={setSelectedOrderId}
-        adminSearch={adminSearch}
-        setAdminSearch={setAdminSearch}
-        adminStatusFilter={adminStatusFilter}
-        setAdminStatusFilter={setAdminStatusFilter}
-        adminServiceFilter={adminServiceFilter}
-        setAdminServiceFilter={setAdminServiceFilter}
-        adminBranchFilter={adminBranchFilter}
-        setAdminBranchFilter={setAdminBranchFilter}
-        branchMap={branchMap}
-        statusOptions={statusOptions}
-        serviceModes={serviceModes}
-        isFirebaseConfigured={isFirebaseConfigured}
-        isUpdatingStatus={isUpdatingStatus}
-        handleStatusChange={handleStatusChange}
-        logoutAdmin={logoutAdmin}
-        formatDateTime={formatDateTime}
-      />
 
       <AuthModal
         authOpen={authOpen}

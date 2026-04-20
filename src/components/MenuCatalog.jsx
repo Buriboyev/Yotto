@@ -187,7 +187,7 @@ export default function MenuCatalog({
       <div className="menu-section-stack">
         {categoryGroups.length ? (
           categoryGroups.map(([category, products]) => (
-            <section key={category} className="menu-category-section" data-reveal>
+            <section key={category} className="menu-category-section">
               <div className="menu-category-head">
                 <div>
                   <span className="section-eyebrow">{categoryLabels[category][language]}</span>

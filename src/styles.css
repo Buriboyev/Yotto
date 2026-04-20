@@ -243,6 +243,7 @@ textarea {
 .primary-btn,
 .ghost-btn,
 .soft-btn,
+.danger-btn,
 .mini-chip,
 .segment,
 .icon-btn,
@@ -263,6 +264,7 @@ textarea {
 .primary-btn:hover,
 .ghost-btn:hover,
 .soft-btn:hover,
+.danger-btn:hover,
 .mini-chip:hover,
 .segment:hover,
 .icon-btn:hover,
@@ -277,6 +279,7 @@ textarea {
 .primary-btn,
 .ghost-btn,
 .soft-btn,
+.danger-btn,
 .icon-btn,
 .mini-chip,
 .segment,
@@ -288,10 +291,17 @@ textarea {
 .nav-cta,
 .primary-btn,
 .ghost-btn,
-.soft-btn {
+.soft-btn,
+.danger-btn {
   border-radius: 999px;
   padding: 13px 18px;
   font-weight: 700;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none !important;
 }
 
 .language-toggle {
@@ -312,6 +322,12 @@ textarea {
 .primary-btn {
   background: linear-gradient(135deg, var(--accent), var(--accent-soft));
   color: #101218;
+}
+
+.danger-btn {
+  background: linear-gradient(135deg, rgba(255, 123, 84, 0.2), rgba(255, 85, 85, 0.14));
+  color: #fff;
+  border: 1px solid rgba(255, 123, 84, 0.32);
 }
 
 .ghost-btn,
@@ -1095,6 +1111,7 @@ textarea {
 }
 
 .auth-card-head {
+  gap: 16px;
   align-items: flex-start;
 }
 
@@ -1106,6 +1123,34 @@ textarea {
 
 .auth-error {
   color: #ffb298;
+}
+
+.admin-route-shell {
+  width: min(1480px, calc(100% - 24px));
+  min-height: 100vh;
+  padding: 24px 0 28px;
+  display: grid;
+  align-content: start;
+}
+
+.admin-access-shell {
+  min-height: calc(100vh - 52px);
+  display: grid;
+  place-items: center;
+  gap: 18px;
+}
+
+.admin-access-card {
+  width: min(560px, calc(100% - 8px));
+  padding: 28px;
+  border-radius: 32px;
+}
+
+.admin-access-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .image-viewer {
@@ -1130,8 +1175,11 @@ textarea {
   width: min(1380px, calc(100% - 18px));
   max-height: calc(100vh - 18px);
   overflow: auto;
-  padding: 18px;
-  border-radius: 32px;
+  display: grid;
+  align-content: start;
+  gap: 22px;
+  padding: 24px;
+  border-radius: 36px;
   background:
     linear-gradient(180deg, rgba(18, 19, 28, 0.94), rgba(8, 10, 16, 0.96)),
     rgba(8, 10, 16, 0.9);
@@ -1141,8 +1189,19 @@ textarea {
   transition: transform 220ms ease;
 }
 
+.admin-panel.standalone {
+  width: 100%;
+  max-height: none;
+  min-height: calc(100vh - 52px);
+  transform: none;
+}
+
 .admin-shell.open .admin-panel {
   transform: translateY(0) scale(1);
+}
+
+.admin-panel-head {
+  gap: 20px;
 }
 
 .admin-panel-head h3 {
@@ -1154,65 +1213,97 @@ textarea {
 .admin-head-actions {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .admin-metrics {
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin-top: 18px;
+  margin-top: 0;
 }
 
 .admin-content {
   display: grid;
   grid-template-columns: 0.95fr 1.05fr;
-  gap: 18px;
-  margin-top: 18px;
+  gap: 24px;
+  margin-top: 0;
+  align-items: start;
 }
 
 .admin-order-list,
 .admin-order-detail {
-  padding: 18px;
+  padding: 20px;
+  border-radius: 30px;
   border: 1px solid rgba(255, 255, 255, 0.16);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
 }
 
 .admin-order-list {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   max-height: 62vh;
   overflow: auto;
 }
 
 .order-list-item {
-  padding: 16px;
-  border-radius: 20px;
+  padding: 18px;
+  border-radius: 24px;
   text-align: left;
+  display: grid;
+  gap: 14px;
 }
 
 .order-list-item p,
 .order-list-item small {
   color: var(--text-soft);
-  margin: 8px 0 0;
+  margin: 0;
 }
 
 .order-list-bottom {
   align-items: center;
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .admin-order-detail {
   display: grid;
   align-content: start;
-  gap: 16px;
+  gap: 18px;
 }
 
 .admin-detail-head strong {
   font-size: 1.2rem;
 }
 
+.admin-detail-top {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-detail-total {
+  white-space: nowrap;
+}
+
+.admin-quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-action-btn {
+  justify-content: center;
+}
+
 .admin-spec-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
+}
+
+.admin-spec-grid > div {
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .admin-spec-grid strong {
@@ -1221,8 +1312,8 @@ textarea {
 }
 
 .admin-note-box {
-  padding: 16px;
-  border-radius: 20px;
+  padding: 18px;
+  border-radius: 24px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -1261,6 +1352,10 @@ textarea {
 .status-done {
   background: rgba(118, 222, 168, 0.16);
   color: var(--success);
+}
+
+.admin-time-note {
+  color: var(--text-muted);
 }
 
 [data-reveal] {
@@ -1318,6 +1413,11 @@ textarea {
     padding-top: 14px;
   }
 
+  .admin-route-shell {
+    width: min(100% - 18px, 100%);
+    padding-top: 14px;
+  }
+
   .topbar {
     flex-wrap: wrap;
     justify-content: flex-start;
@@ -1362,9 +1462,58 @@ textarea {
     min-height: 320px;
   }
 
+  .menu-category-section {
+    padding: 18px;
+  }
+
+  .dish-card-image {
+    min-height: 170px;
+  }
+
+  .dish-card-body {
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .dish-card h3 {
+    margin-bottom: 0;
+    font-size: 1.08rem;
+  }
+
+  .dish-card p {
+    min-height: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.55;
+  }
+
+  .product-option-block {
+    gap: 8px;
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .tag-chip,
+  .order-item-chip,
+  .mode-pill {
+    padding: 7px 10px;
+    font-size: 0.76rem;
+  }
+
+  .qty-controller {
+    gap: 8px;
+    padding: 6px;
+  }
+
+  .qty-controller button {
+    width: 32px;
+    height: 32px;
+  }
+
   .hero-overlay,
   .form-footer,
-  .dish-card-actions,
   .menu-category-head,
   .footer-shell,
   .admin-panel-head,
@@ -1373,6 +1522,16 @@ textarea {
   .board-card-body {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .dish-card-actions {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dish-card .qty-controller {
+    width: auto;
   }
 
   .segment-control {
@@ -1389,6 +1548,13 @@ textarea {
     padding: 14px;
   }
 
+  .admin-panel.standalone {
+    width: 100%;
+    min-height: calc(100vh - 24px);
+    max-height: none;
+    padding: 16px;
+  }
+
   .admin-order-list {
     max-height: none;
   }
@@ -1400,6 +1566,10 @@ textarea {
 
 @media (max-width: 640px) {
   .page-shell {
+    width: min(100% - 14px, 100%);
+  }
+
+  .admin-route-shell {
     width: min(100% - 14px, 100%);
   }
 
@@ -1431,17 +1601,78 @@ textarea {
     justify-content: center;
   }
 
+  .menu-category-section {
+    padding: 14px;
+  }
+
+  .menu-category-head {
+    margin-bottom: 14px;
+  }
+
+  .menu-category-head h3 {
+    font-size: 1.2rem;
+  }
+
+  .dish-card {
+    border-radius: 22px;
+  }
+
+  .dish-card-image {
+    min-height: 136px;
+  }
+
+  .dish-card-body {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .dish-card h3 {
+    font-size: 1rem;
+  }
+
+  .dish-card p {
+    font-size: 0.92rem;
+    line-height: 1.45;
+  }
+
+  .dish-meta-line {
+    gap: 10px;
+  }
+
+  .product-option-block {
+    padding: 10px;
+  }
+
+  .compact-select,
+  .compact-select select {
+    min-height: 46px;
+  }
+
+  .select-shell select {
+    padding: 12px 46px 12px 14px;
+  }
+
+  .dish-branches,
+  .chip-row {
+    gap: 8px;
+  }
+
   .dish-card-body,
   .branch-card-body,
   .reservation-form,
   .cart-panel,
-  .menu-category-section {
+  .admin-access-card {
     padding: 16px;
   }
 
   .qty-controller {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .dish-card .qty-controller {
+    width: auto;
+    justify-content: flex-start;
   }
 
   .menu-category-head strong {
