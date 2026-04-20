@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Yotto Sushi & Wok — современный сайт с iOS glass effect, online reservation и live-списком заказов."
+    />
+    <title>Yotto Sushi & Wok</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var redirectedPath = params.get("p");
+
+        if (!redirectedPath) {
+          return;
+        }
+
+        params.delete("p");
+
+        var knownRoutes = new Set(["branches", "gallery", "menu", "reservation"]);
+        var pathnameParts = window.location.pathname.split("/").filter(Boolean);
+        var basePath = "";
+
+        if (
+          window.location.hostname.endsWith(".github.io") &&
+          pathnameParts.length &&
+          !knownRoutes.has(pathnameParts[0])
+        ) {
+          basePath = "/" + pathnameParts[0];
+        }
+
+        var nextPath = redirectedPath.charAt(0) === "/" ? redirectedPath : "/" + redirectedPath;
+        var nextSearch = params.toString();
+        var nextUrl = basePath + nextPath + (nextSearch ? "?" + nextSearch : "");
+
+        window.history.replaceState(null, "", nextUrl);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

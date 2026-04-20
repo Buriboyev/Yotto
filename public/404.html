@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting...</title>
+    <script>
+      (function () {
+        var knownRoutes = new Set(["branches", "gallery", "menu", "reservation"]);
+        var pathParts = window.location.pathname.split("/").filter(Boolean);
+        var baseParts = [];
+        var routeParts = pathParts;
+
+        if (
+          window.location.hostname.endsWith(".github.io") &&
+          pathParts.length &&
+          !knownRoutes.has(pathParts[0])
+        ) {
+          baseParts = [pathParts[0]];
+          routeParts = pathParts.slice(1);
+        }
+
+        var basePath = baseParts.length ? "/" + baseParts.join("/") : "";
+        var extraSearch = window.location.search ? window.location.search.slice(1) : "";
+        var queryParts = ["p=" + encodeURIComponent("/" + routeParts.join("/"))];
+
+        if (extraSearch) {
+          queryParts.push(extraSearch);
+        }
+
+        window.location.replace(basePath + "/?" + queryParts.join("&"));
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

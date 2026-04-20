@@ -1,0 +1,83 @@
+import MenuCatalog from "../components/MenuCatalog";
+import ReservationSection from "../components/ReservationSection";
+
+export default function MenuPage({
+  text,
+  language,
+  branches,
+  branchMap,
+  categoryLabels,
+  categoryGroups,
+  menuSearch,
+  setMenuSearch,
+  menuCategory,
+  setMenuCategory,
+  menuBranch,
+  setMenuBranch,
+  boardBranch,
+  setBoardBranch,
+  officialMenuBoards,
+  onOpenBoard,
+  hasActiveFilters,
+  onResetFilters,
+  productSelections,
+  cart,
+  onSelectOption,
+  onAddToCart,
+  onIncreaseCart,
+  onDecreaseCart,
+  form,
+  updateFormField,
+  handleSubmit,
+  selectedItems,
+  total,
+  isFirebaseConfigured,
+  isSubmitting,
+  onScrollToMenu,
+}) {
+  return (
+    <main>
+      <MenuCatalog
+        text={text}
+        language={language}
+        branches={branches}
+        branchMap={branchMap}
+        categoryLabels={categoryLabels}
+        categoryGroups={categoryGroups}
+        menuSearch={menuSearch}
+        setMenuSearch={setMenuSearch}
+        menuCategory={menuCategory}
+        setMenuCategory={setMenuCategory}
+        menuBranch={menuBranch}
+        setMenuBranch={setMenuBranch}
+        boardBranch={boardBranch}
+        setBoardBranch={setBoardBranch}
+        officialMenuBoards={officialMenuBoards}
+        onOpenBoard={onOpenBoard}
+        hasActiveFilters={hasActiveFilters}
+        onResetFilters={onResetFilters}
+        productSelections={productSelections}
+        cart={cart}
+        onSelectOption={onSelectOption}
+        onAddToCart={onAddToCart}
+        onIncreaseCart={onIncreaseCart}
+        onDecreaseCart={onDecreaseCart}
+      />
+
+      <ReservationSection
+        text={text}
+        language={language}
+        branches={branches}
+        branchMap={branchMap}
+        form={form}
+        updateFormField={updateFormField}
+        handleSubmit={handleSubmit}
+        selectedItems={selectedItems}
+        total={total}
+        isFirebaseConfigured={isFirebaseConfigured}
+        isSubmitting={isSubmitting}
+        onScrollToMenu={onScrollToMenu}
+      />
+    </main>
+  );
+}
